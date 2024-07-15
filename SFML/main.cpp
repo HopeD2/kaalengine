@@ -84,6 +84,12 @@ int main()
 	{
 		float deltaTime = clock.restart().asSeconds();
 
+		// temporary fix
+		if (deltaTime > 0.001)
+		{
+			deltaTime = 0.001;
+		}
+
 		sf::Event evt;
 		while (window.pollEvent(evt)) 
 		{
