@@ -107,5 +107,5 @@ kaal::ColliderComponent& kaal::Player::getColliderComponent()
 
 sf::Vector2f & kaal::Player::getVelocity()
 {
-	// TODO: insert return statement here
+	return velocity;
 }
