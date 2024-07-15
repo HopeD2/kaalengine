@@ -123,6 +123,8 @@ int main()
 		sf::RectangleShape viewportBackground;
 		viewportBackground.setSize(sf::Vector2f(view.getSize().x, view.getSize().y));
 		viewportBackground.setFillColor(sf::Color::Color(128, 128, 128)); // Set your desired color here
+		viewportBackground.setOrigin((viewportBackground.getPosition() + viewportBackground.getSize())/2.f);
+		viewportBackground.setPosition(player.getBody().getPosition());
 		window.draw(viewportBackground);
 		for (auto &platform : platforms)
 		{
