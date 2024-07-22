@@ -118,10 +118,14 @@ int main()
 				break;
 			}
 		}
-		
-		player.update(deltaTime);
 
-		view.setCenter(player.getBody().getPosition());
+		sf::VertexArray line(sf::Lines, 2);
+		line[0].position = (sf::Vector2f) mousePos;
+		line[1].position = player.getBody().getPosition();
+		
+		player.update(deltaTime, window);
+
+		//view.setCenter(player.getBody().getPosition());
 		window.clear(sf::Color::Black);
 		window.setView(view);
 
@@ -129,14 +133,17 @@ int main()
 		sf::RectangleShape viewportBackground;
 		viewportBackground.setSize(sf::Vector2f(view.getSize().x, view.getSize().y));
 		viewportBackground.setFillColor(sf::Color::Color(128, 128, 128)); // Set your desired color here
-		viewportBackground.setOrigin((viewportBackground.getPosition() + viewportBackground.getSize())/2.f);
-		viewportBackground.setPosition(player.getBody().getPosition());
+		
+		/*viewportBackground.setOrigin((viewportBackground.getPosition() + viewportBackground.getSize())/2.f);
+		viewportBackground.setPosition(player.getBody().getPosition());*/
+
 		window.draw(viewportBackground);
 		for (auto &platform : platforms)
 		{
 			window.draw(platform);
 		}
 		player.draw(window);
+		window.draw(line);
 		window.display();
 
 	//	std::this_thread::sleep_for(std::chrono::milliseconds(1));
