@@ -16,6 +16,8 @@
 const float VIEW_WIDTH = 1024.f;
 const float VIEW_HEIGHT = 768.f;
 
+//#define FOLLOW_PLAYER
+
 // Define the element-wise multiplication operator for sf::Vector2f
 sf::Vector2f operator*(const sf::Vector2f& left, const sf::Vector2f& right)
 {
@@ -71,11 +73,16 @@ int main()
 	sf::RectangleShape wall = kaal::utility::GetCustomRectangle(sf::Vector2f(256.f, 256.f), sf::Vector2f(0.f, 450.f), 2.f, sf::Color::Magenta, sf::Color::Transparent);
 	sf::RectangleShape wall2 = kaal::utility::GetCustomRectangle(sf::Vector2f(256.f, 256.f), sf::Vector2f(wall.getPosition().x + wall.getSize().x, wall.getPosition().y), 2.f, sf::Color::Magenta, sf::Color::Transparent);
 	sf::RectangleShape wall3 = kaal::utility::GetCustomRectangle(sf::Vector2f(800.f, 256.f), sf::Vector2f(wall2.getPosition().x + wall2.getSize().x, wall2.getPosition().y - 50.f), 2.f, sf::Color::Magenta, sf::Color::Transparent);
+	sf::RectangleShape wall4 = kaal::utility::GetCustomRectangle(sf::Vector2f(800.f, 256.f), sf::Vector2f(wall2.getPosition().x, wall2.getPosition().y - 520.f), 2.f, sf::Color::Magenta, sf::Color::Transparent);
+	sf::RectangleShape wall5 = kaal::utility::GetCustomRectangle(sf::Vector2f(800.f, 256.f), sf::Vector2f(wall2.getPosition().x + wall2.getSize().x, wall2.getPosition().y - 50.f), 2.f, sf::Color::Magenta, sf::Color::Transparent);
+	sf::RectangleShape wall6 = kaal::utility::GetCustomRectangle(sf::Vector2f(800.f, 256.f), sf::Vector2f(wall2.getPosition().x + wall2.getSize().x, wall2.getPosition().y - 50.f), 2.f, sf::Color::Magenta, sf::Color::Transparent);
+
 
 	std::vector<sf::RectangleShape> platforms;
 	platforms.emplace_back(wall);
 	platforms.emplace_back(wall2);
 	platforms.emplace_back(wall3);
+	platforms.emplace_back(wall4);
 
 	sf::Clock clock;
 	view.setCenter(VIEW_WIDTH / 2, VIEW_HEIGHT / 2);
@@ -108,9 +115,6 @@ int main()
 
 		auto mousePos = sf::Mouse::getPosition(window);
 
-		sf::Vector2f playerPos = (player.getBody().getSize() - player.getBody().getPosition()) / 2.f;
-		sf::RectangleShape& playerRect = player.getCollisionBox();
-
 		for (auto &platform : platforms)
 		{
 			auto colDir = kaal::Collider::ResolveCollision(player.getColliderComponent(), platform, 0.f);
@@ -119,13 +123,22 @@ int main()
 			}
 		}
 
+		auto realBody = player.getBody();
+
+		realBody.setFillColor(sf::Color::Transparent);
+		realBody.setPosition(realBody.getPosition());
+		realBody.setOutlineColor(sf::Color::Blue);
+		realBody.setOutlineThickness(2.f);
+
 		sf::VertexArray line(sf::Lines, 2);
 		line[0].position = (sf::Vector2f) mousePos;
-		line[1].position = player.getBody().getPosition();
-		
+		line[1].position = (player.getBody().getPosition() + player.getBody().getSize()/2.f);
+
 		player.update(deltaTime, window);
 
-		//view.setCenter(player.getBody().getPosition());
+#ifdef FOLLOW_PLAYER
+		view.setCenter(player.getBody().getPosition());
+#endif //FOLLOW_PLAYER
 		window.clear(sf::Color::Black);
 		window.setView(view);
 
@@ -133,9 +146,11 @@ int main()
 		sf::RectangleShape viewportBackground;
 		viewportBackground.setSize(sf::Vector2f(view.getSize().x, view.getSize().y));
 		viewportBackground.setFillColor(sf::Color::Color(128, 128, 128)); // Set your desired color here
-		
-		/*viewportBackground.setOrigin((viewportBackground.getPosition() + viewportBackground.getSize())/2.f);
-		viewportBackground.setPosition(player.getBody().getPosition());*/
+
+#ifdef FOLLOW_PLAYER
+		viewportBackground.setOrigin((viewportBackground.getPosition() + viewportBackground.getSize())/2.f);
+		viewportBackground.setPosition(player.getBody().getPosition());
+#endif //FOLLOW_PLAYER
 
 		window.draw(viewportBackground);
 		for (auto &platform : platforms)
@@ -143,6 +158,7 @@ int main()
 			window.draw(platform);
 		}
 		player.draw(window);
+		window.draw(realBody);
 		window.draw(line);
 		window.display();
 

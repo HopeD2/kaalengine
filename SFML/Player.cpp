@@ -15,8 +15,10 @@ kaal::Player::Player(sf::Vector2f size, sf::Texture * _texture, sf::Vector2u _im
 	finalVelocity(0.f, 0000.f),
 	currentVelocityY(0.f),
 	totalDistanceTravelled(0.f),
-	dashTimeout(1.5f),
-	dashDistance(300.f)
+	dashTimeout(0.5f),
+	dashDistance(300.f),
+	mass(5000.f),
+	dashForce(10.f)
 {
 	body.setFillColor(sf::Color::Cyan);
 
@@ -32,6 +34,7 @@ kaal::Player::~Player()
 void kaal::Player::update(float deltaTime, sf::RenderWindow& window)
 {
 	int row = 0;
+	int stopAt = 7;
 	bool isIdle = true;
 
 	if (!isDashing)
@@ -57,20 +60,20 @@ void kaal::Player::update(float deltaTime, sf::RenderWindow& window)
 		}
 	}
 
-	
 	sf::Vector2f mousePos = (sf::Vector2f)sf::Mouse::getPosition(window);
-	sf::Vector2f dashVec = mousePos -  body.getPosition();
+	sf::Vector2f dashVec = mousePos -  (body.getPosition() + body.getSize() / 2.f);
+	dashVec = kaal::utility::getSignVector(dashVec);
 
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift) && !isDashing && timer.getElapsedTime().asSeconds() >= dashTimeout)
 	{
 		std::cout << "Dash\n";
 		dashVec = kaal::utility::getSignVector(dashVec);
-		float acc = 5000.f / 5.f;
-		velocity = dashVec * sqrtf(2.0f * acc * 1000.f);
-		finalVelocity = velocity;
-		finalDashPos = body.getPosition() + sf::Vector2f(100.f,100.f);
-		kaal::utility::dispVector(finalDashPos);
-		std::cout << "\n";
+		if (!lastDash) {
+			lastDash = new sf::Vector2f(dashVec);
+		}
+		float acceleration = mass / dashForce;
+		velocity = dashVec * sqrtf(2.0f * acceleration * 1000.f);
+		//dashTimeout = 1.5f;
 		isDashing = true;
 	}
 
@@ -87,13 +90,23 @@ void kaal::Player::update(float deltaTime, sf::RenderWindow& window)
 	{
 		isJumping = false;
 		velocity.y = 0.f;
-		isDashing = false;
+		//isDashing = false;
 	}
 
-	if (isDashing)
+	if (collisionBox.collisionDir == kaal::UP && isDashing)
 	{
-		kaal::utility::dispVector(velocity);
-		std::cout << "\n";
+		if (lastDash) {
+			dashVec.y = -lastDash->y;
+			timer.restart();
+			totalDistanceTravelled = 0;
+			float acceleration = mass / dashForce;
+			velocity = dashVec * sqrtf(2.0f * acceleration * 1000.f);
+			isDashing = true;
+		}
+		else {
+			lastDash = nullptr;
+			isDashing = false;
+		}
 	}
 
 	if (velocity.x != 0.f)
@@ -110,7 +123,13 @@ void kaal::Player::update(float deltaTime, sf::RenderWindow& window)
 		faceRight = true;
 	}
 
-	animation.update(row, deltaTime, 7, faceRight);
+	if (isDashing)
+	{
+		row = 6;
+		stopAt = 1;
+	}
+
+	animation.update(row, deltaTime, stopAt, faceRight);
 	body.setTextureRect(animation.uvRect);
 
 	sf::Vector2f moveby = velocity * deltaTime;

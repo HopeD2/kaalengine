@@ -39,6 +39,9 @@ namespace kaal {
 		float dashTimeout;
 		float dashDistance;
 		sf::Clock timer;
+		float mass;
+		float dashForce;
+		sf::Vector2f *lastDash;
 	};
 }
 
