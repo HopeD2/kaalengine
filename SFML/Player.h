@@ -22,6 +22,8 @@ namespace kaal {
 		ColliderComponent& getColliderComponent();
 		sf::Vector2f & getVelocity();
 
+		void setLevelOffset(sf::Vector2f offset);
+
 	private:
 		sf::RectangleShape body;
 		ColliderComponent collisionBox;
@@ -42,6 +44,7 @@ namespace kaal {
 		float mass;
 		float dashForce;
 		sf::Vector2f *lastDash;
+		sf::Vector2f levelOffset;
 	};
 }
 

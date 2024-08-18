@@ -16,6 +16,9 @@
 const float VIEW_WIDTH = 1024.f;
 const float VIEW_HEIGHT = 768.f;
 
+const float MAX_LEFT_LIMIT = 0.f;
+const float MAX_RIGHT_LIMIT = VIEW_WIDTH * 3.f;
+
 //#define FOLLOW_PLAYER
 
 // Define the element-wise multiplication operator for sf::Vector2f
@@ -68,14 +71,15 @@ int main()
 	playerTexture.loadFromFile("../resources/DarkSamuraiAssets/DarkSamurai.png");
 
 	kaal::Player player{ sf::Vector2f(128.f, 128.f), &playerTexture, sf::Vector2u(14, 8), (float) 0.1, 250.f };
+	bool moveRight = true;
+	bool moveLeft = true;
 	
-
 	sf::RectangleShape wall = kaal::utility::GetCustomRectangle(sf::Vector2f(256.f, 256.f), sf::Vector2f(0.f, 450.f), 2.f, sf::Color::Magenta, sf::Color::Transparent);
 	sf::RectangleShape wall2 = kaal::utility::GetCustomRectangle(sf::Vector2f(256.f, 256.f), sf::Vector2f(wall.getPosition().x + wall.getSize().x, wall.getPosition().y), 2.f, sf::Color::Magenta, sf::Color::Transparent);
 	sf::RectangleShape wall3 = kaal::utility::GetCustomRectangle(sf::Vector2f(800.f, 256.f), sf::Vector2f(wall2.getPosition().x + wall2.getSize().x, wall2.getPosition().y - 50.f), 2.f, sf::Color::Magenta, sf::Color::Transparent);
 	sf::RectangleShape wall4 = kaal::utility::GetCustomRectangle(sf::Vector2f(800.f, 256.f), sf::Vector2f(wall2.getPosition().x, wall2.getPosition().y - 520.f), 2.f, sf::Color::Magenta, sf::Color::Transparent);
-	sf::RectangleShape wall5 = kaal::utility::GetCustomRectangle(sf::Vector2f(800.f, 256.f), sf::Vector2f(wall2.getPosition().x + wall2.getSize().x, wall2.getPosition().y - 50.f), 2.f, sf::Color::Magenta, sf::Color::Transparent);
-	sf::RectangleShape wall6 = kaal::utility::GetCustomRectangle(sf::Vector2f(800.f, 256.f), sf::Vector2f(wall2.getPosition().x + wall2.getSize().x, wall2.getPosition().y - 50.f), 2.f, sf::Color::Magenta, sf::Color::Transparent);
+	sf::RectangleShape wall5 = kaal::utility::GetCustomRectangle(sf::Vector2f(800.f, 256.f), sf::Vector2f(wall3.getPosition().x + wall3.getSize().x, wall3.getPosition().y - 50.f), 2.f, sf::Color::Magenta, sf::Color::Transparent);
+	sf::RectangleShape wall6 = kaal::utility::GetCustomRectangle(sf::Vector2f(800.f, 256.f), sf::Vector2f(wall4.getPosition().x + wall4.getSize().x, wall4.getPosition().y - 50.f), 2.f, sf::Color::Magenta, sf::Color::Transparent);
 
 
 	std::vector<sf::RectangleShape> platforms;
@@ -83,9 +87,14 @@ int main()
 	platforms.emplace_back(wall2);
 	platforms.emplace_back(wall3);
 	platforms.emplace_back(wall4);
+	platforms.emplace_back(wall5);
+	platforms.emplace_back(wall6);
 
 	sf::Clock clock;
 	view.setCenter(VIEW_WIDTH / 2, VIEW_HEIGHT / 2);
+
+	float curLeftLimit = 0.f;
+	float curRightLimit = VIEW_WIDTH;
 
 	while (window.isOpen())
 	{
@@ -98,22 +107,24 @@ int main()
 		}
 
 		sf::Event evt;
-		while (window.pollEvent(evt)) 
+		while (window.pollEvent(evt))
 		{
 			switch (evt.type)
 			{
-				case sf::Event::Closed:
-				{
-					window.close();
-				}break;
-				case sf::Event::Resized:
-				{
-					ResizeView(window, view);
-				}break;
+			case sf::Event::Closed:
+			{
+				window.close();
+			}break;
+			case sf::Event::Resized:
+			{
+				ResizeView(window, view);
+			}break;
 			}
 		}
 
 		auto mousePos = sf::Mouse::getPosition(window);
+		mousePos.x = mousePos.x + (int)curLeftLimit;
+		player.setLevelOffset(sf::Vector2f(curLeftLimit, 0.f));
 
 		for (auto &platform : platforms)
 		{
@@ -132,9 +143,40 @@ int main()
 
 		sf::VertexArray line(sf::Lines, 2);
 		line[0].position = (sf::Vector2f) mousePos;
-		line[1].position = (player.getBody().getPosition() + player.getBody().getSize()/2.f);
+		line[1].position = (player.getBody().getPosition() + player.getBody().getSize() / 2.f);
 
 		player.update(deltaTime, window);
+
+		if (realBody.getPosition().x < curLeftLimit || realBody.getPosition().x > curRightLimit)
+		{
+			float playerPos_x = realBody.getPosition().x;
+			if (playerPos_x <= MAX_LEFT_LIMIT)
+			{
+				//set player position to within bounds
+			}
+
+			if (playerPos_x >= MAX_RIGHT_LIMIT)
+			{
+				//set player position to within bounds
+			}
+
+			if (playerPos_x >= curRightLimit)
+			{
+				float tempLim = curRightLimit;
+				curRightLimit += VIEW_WIDTH;
+				curLeftLimit = tempLim;
+				
+				view.move(VIEW_WIDTH, 0.f);
+			}
+			else if (playerPos_x <= curLeftLimit)
+			{
+				float tempLim = curLeftLimit;
+				curLeftLimit -= VIEW_WIDTH;
+				curRightLimit = tempLim;
+
+				view.move(-VIEW_WIDTH, 0.f);
+			}
+		}
 
 #ifdef FOLLOW_PLAYER
 		view.setCenter(player.getBody().getPosition());

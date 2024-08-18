@@ -15,10 +15,11 @@ kaal::Player::Player(sf::Vector2f size, sf::Texture * _texture, sf::Vector2u _im
 	finalVelocity(0.f, 0000.f),
 	currentVelocityY(0.f),
 	totalDistanceTravelled(0.f),
-	dashTimeout(0.5f),
+	dashTimeout(0.8f),
 	dashDistance(300.f),
 	mass(5000.f),
-	dashForce(10.f)
+	dashForce(10.f),
+	levelOffset(0.f,0.f)
 {
 	body.setFillColor(sf::Color::Cyan);
 
@@ -61,12 +62,12 @@ void kaal::Player::update(float deltaTime, sf::RenderWindow& window)
 	}
 
 	sf::Vector2f mousePos = (sf::Vector2f)sf::Mouse::getPosition(window);
+	mousePos += levelOffset;
 	sf::Vector2f dashVec = mousePos -  (body.getPosition() + body.getSize() / 2.f);
 	dashVec = kaal::utility::getSignVector(dashVec);
 
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift) && !isDashing && timer.getElapsedTime().asSeconds() >= dashTimeout)
 	{
-		std::cout << "Dash\n";
 		dashVec = kaal::utility::getSignVector(dashVec);
 		if (!lastDash) {
 			lastDash = new sf::Vector2f(dashVec);
@@ -79,7 +80,6 @@ void kaal::Player::update(float deltaTime, sf::RenderWindow& window)
 
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space) && !isJumping)
 	{
-		std::cout << "Jump!\n";
 		velocity.y = - sqrtf(2.0f * 981.f * 100.f);
 		isJumping = true;
 	}
@@ -102,10 +102,12 @@ void kaal::Player::update(float deltaTime, sf::RenderWindow& window)
 			float acceleration = mass / dashForce;
 			velocity = dashVec * sqrtf(2.0f * acceleration * 1000.f);
 			isDashing = true;
+			lastDash = nullptr;
 		}
 		else {
 			lastDash = nullptr;
 			isDashing = false;
+			totalDistanceTravelled = dashDistance;
 		}
 	}
 
@@ -140,8 +142,8 @@ void kaal::Player::update(float deltaTime, sf::RenderWindow& window)
 
 	if (totalDistanceTravelled >= dashDistance) {
 		isDashing = false;
+		lastDash = nullptr;
 		totalDistanceTravelled = 0.f;
-		std::cout << "Dashing stopped\n";
 		velocity.y = 0.f;
 		timer.restart();
 	}
@@ -174,4 +176,10 @@ kaal::ColliderComponent& kaal::Player::getColliderComponent()
 sf::Vector2f & kaal::Player::getVelocity()
 {
 	return velocity;
+}
+
+void kaal::Player::setLevelOffset(sf::Vector2f offset)
+{
+	// TODO: Change later, should not be managed by player
+	levelOffset = offset;
 }
